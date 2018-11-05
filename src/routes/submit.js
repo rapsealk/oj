@@ -20,7 +20,7 @@ router.post('/', async (req, res) => {
     const filename = `${dirname}/${Date.now()}.c`;
     fs.writeFileSync(filename, code, 'utf-8');
 
-    const compile = spawn('gcc', [`$${filename}`, '-o', `${dirname}/expr`]);
+    const compile = spawn('gcc', [`${filename}`, '-o', `${dirname}/expr`]);
     compile.stdout.on('data', data => console.log('stdout:', data));
     compile.stderr.on('data', data => console.log('stderr:', data));
     compile.on('close', code => console.log('close:', code));

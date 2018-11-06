@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 const index = require('./routes/index');
-const submit = require('./routes/submit');
+//const submit = require('./routes/submit');
 
 const app = express();
 
@@ -25,7 +25,7 @@ app.use('/monaco', express.static(path.join(__dirname, 'node_modules/monaco-edit
 app.use('/axios', express.static(path.join(__dirname, 'node_modules/axios')));
 
 app.use('/', index);
-app.use('/submit', submit);
+//app.use('/submit', submit);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

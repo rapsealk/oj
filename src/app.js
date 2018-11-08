@@ -8,6 +8,8 @@ const bodyParser = require('body-parser');
 const index = require('./routes/index');
 //const submit = require('./routes/submit');
 
+process.env.BOOT_TIME = new Date();
+
 const app = express();
 
 // view engine setup

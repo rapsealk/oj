@@ -142,10 +142,10 @@
                             <hr>
                             <!-- Dynamic request -->
                             <div class="col-md-6">
-                                <pre class="prettyprint" id="sample-input">//입력<br>123</pre>
+                                <pre class="prettyprint" id="sample-input">// 입력<br>calendar 1945.8.15 2017.8.15<br>calendar 2017.8.28 1000<br>calendar 1919.3.1</pre>
                             </div>
                             <div class="col-md-6">
-                                <pre class="prettyprint" id="sample-output">//출력<br>345</pre>
+                                <pre class="prettyprint" id="sample-output">// 출력<br>경과 일수: 26298일<br>경과 날짜: 2020년 5월 24일<br>토요일</pre>
                             </div>                    
                         </div>
                         <div class="modal-footer">
@@ -258,8 +258,12 @@
             var submitButton = document.getElementById('btn-submit');
 
             socket.on('cperror', data => {
-				console.log('socket:on[error]:', data);
                 alertNodeGenerator('danger', data);
+                submitButton.disabled = false;
+            });
+
+            socket.on('exerror', data => {
+                alertNodeGenerator('warning', data);
                 submitButton.disabled = false;
             });
 

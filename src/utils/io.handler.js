@@ -32,26 +32,52 @@ module.exports = io => {
 				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
 				compile.stderr.on('data', data => {
 					isCompileSuccessful = false;
-					data = data.toString('utf-8').split(':');
-					data.shift();
-					data = data.join(':');
+					data = data.toString('utf-8').split(':').splice(1).join(':');
 					console.log('[compile:stderr]:', data);
 					socket.emit('cperror', data);
+					compile.kill('SIGKILL');
 				});
 				compile.on('error', message => console.log('[compile:error]:', message));
 				compile.on('close', code => {
 					console.log('[compile:close]:', code);
 	
 					if (!isCompileSuccessful) return;
-	
+
 					// execute
-					/*
-					try {
-						const execute = spawn(`${dirname}/${timestamp}`);
-						execute.stdout.on('data', data => console.log('[execute:stdout]:', data.toString('utf-8')));
+					const inputs = fs.readFileSync(`${dirname}/20181109_in.txt`, { encoding: 'utf-8' }).split('\n');
+					const answers = fs.readFileSync(`${dirname}/20181109_out.txt`, { encoding: 'utf-8' }).split('\n');
+					inputs.forEach((input, index) => {
+						const execute = spawn(`${dirname}/${timestamp}`, inputs.split(' '));
+						execute.stdout.on('data', data => {
+							const equals = (data.toString('utf-8') == answers[index]);
+							console.log('[execute:stdout]:', data.toString('utf-8'), '[expected]:', answers[index], '[equals]:', equals);
+							if (!equals) {
+								socket.emit('exerror', `Input: ${input}, Expected: ${answers[index]}, Output: ${data.toString('utf-8')}`);
+								execute.kill('SIGKILL');
+							}
+						});
 						execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
 						execute.on('error', message => console.log('[execute:error]:', message));
 						execute.on('close', code => console.log('[execute:close]:', code));
+					});
+					/*
+					try {
+						const execute = spawn(`${dirname}/${timestamp}`);
+						const outputs = [];
+						execute.stdout.on('data', data => {
+							console.log('[execute:stdout]:', data.toString('utf-8'));
+							outputs.push(data.toString('utf-8'));
+						});
+						execute.stderr.on('data', data => {
+							data = data.toString('utf-8');
+							console.log('[execute:stderr]:', data);
+							socket.emit('exerror', data);
+						});
+						execute.on('error', message => console.log('[execute:error]:', message));
+						execute.on('close', code => {
+							console.log('[execute:close]:', code);
+
+						});
 					} catch (e) {
 						console.log('[execute_error]:', e);
 						throw e;

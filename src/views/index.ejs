@@ -83,39 +83,41 @@
 						</div>
                     
                         <!-- alert -->
-                        <div class="alert alert-success">
-                            <div class="container-fluid">
-                                <div class="alert-icon">
-                                <i class="material-icons">check</i>
-                                </div>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true"><i class="material-icons">clear</i></span>
-                                </button>
-                                <b>Success Alert:</b> Yuhuuu! You've got your $11.99 album from The Weeknd
-                            </div>
-                        </div>
-
-                        <div class="alert alert-warning">
-                            <div class="container-fluid">
+                        <div id="alert-zone">
+                            <div class="alert alert-success">
+                                <div class="container-fluid">
                                     <div class="alert-icon">
-                                    <i class="material-icons">warning</i>
+                                    <i class="material-icons">check</i>
                                     </div>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                     <span aria-hidden="true"><i class="material-icons">clear</i></span>
-                                </button>
-                                    <b>Warning Alert:</b> Hey, it looks like you still have the "copyright &copy;  2015" in your footer. Please update it!
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-danger">
-                            <div class="container-fluid">
-                                <div class="alert-icon">
-                                    <i class="material-icons">error_outline</i>
+                                    </button>
+                                    <b>Success Alert:</b> Yuhuuu! You've got your $11.99 album from The Weeknd
                                 </div>
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true"><i class="material-icons">clear</i></span>
-                                </button>
-                                <b>Error Alert:</b> Damn man! You screwed up the server this time. You should find a good excuse for your Boss...
+                            </div>
+    
+                            <div class="alert alert-warning">
+                                <div class="container-fluid">
+                                        <div class="alert-icon">
+                                        <i class="material-icons">warning</i>
+                                        </div>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true"><i class="material-icons">clear</i></span>
+                                    </button>
+                                        <b>Warning Alert:</b> Hey, it looks like you still have the "copyright &copy;  2015" in your footer. Please update it!
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-danger">
+                                <div class="container-fluid">
+                                    <div class="alert-icon">
+                                        <i class="material-icons">error_outline</i>
+                                    </div>
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                        <span aria-hidden="true"><i class="material-icons">clear</i></span>
+                                    </button>
+                                    <b>Error Alert:</b> Damn man! You screwed up the server this time. You should find a good excuse for your Boss...
+                                </div>
                             </div>
                         </div>
                     
@@ -204,19 +206,65 @@
 				language: 'c'
             });
 
+            // Alert Generator
+            // type: [success, warning, danger]
+            // icon: warning check error_outline
+            const alertClass = ['success', 'warning', 'danger'];
+            const iconClass = ['check', 'warning', 'error_outline'];
+            function alertNodeGenerator(type, message) {
+
+                var rootNode = document.createElement('div');
+                rootNode.className = 'alert alert-' + type;
+                
+                var alertNode = document.createElement('div');
+                alertNode.className = 'container-fluid';
+                
+                var alertIconDiv = document.createElement('div');
+                alertIconDiv.className = 'alert-icon';
+                
+                var iconNode = document.createElement('i');
+                iconNode.className = 'material-icons';
+                iconNode.innerText = iconClass[alertClass.indexOf(type)];
+                alertIconDiv.appendChild(iconNode);
+                
+                var buttonNode = document.createElement('button');
+                buttonNode.type = 'button';
+                buttonNode.className = 'close';
+                buttonNode.setAttribute('data-dismiss', 'alert');
+                buttonNode.setAttribute('aria-label', 'Close');
+                
+                var spanNode = document.createElement('span');
+                spanNode.setAttribute('aria-hidden', true);
+                
+                var spanINode = document.createElement('i');
+                spanINode.className = 'material-icons';
+                spanINode.innerText = 'clear';
+                spanNode.appendChild(spanINode);
+                
+                buttonNode.appendChild(spanNode);
+                
+                alertNode.append('asdfasdfasdf');
+                alertNode.appendChild(buttonNode);
+                
+                rootNode.appendChild(alertNode);
+
+                document.getElementById('alert-zone').appendChild(rootNode);
+            }
+
             // socket.io
             var socket = io();
-
             var submitButton = document.getElementById('btn-submit');
 
-            submitButton.addEventListener('click', function(e) {
-				
-				// lock
-                // submitButton.disabled = true;
-                
-                // socket.emit('data', editor.getValue());
+            socket.on('error', data => {
+                alertNodeGenerator('danger', data);
+                submitButton.disabled = false;
+            });
 
-			});
+            submitButton.addEventListener('click', function(e) {
+				// lock
+                submitButton.disabled = true;
+                socket.emit('data', editor.getValue());
+            });
         });
     </script>
 

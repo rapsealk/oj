@@ -23,12 +23,20 @@ module.exports = io => {
 
 			fs.writeFileSync(filename, code, 'utf-8');
 
+			let isCompileSuccessful = true;
+
 			// compile
 			const compile = spawn('gcc', [filename, '-o', `submits/${timestamp}`]);
 			compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
-			compile.stderr.on('data', data => console.log('[compile:stderr]:', data.toString('utf-8')));
+			compile.stderr.on('data', data => {
+				isCompileSuccessful = false;
+				console.log('[compile:stderr]:', data.toString('utf-8'));
+				socket.emit('error', data.toString('utf-8'));
+			});
 			compile.on('close', code => {
 				console.log('[compile:close]:', code);
+
+				if (!isCompileSuccessful) return;
 
 				// execute
 				const execute = spawn(`${path.join(__dirname, '../submits/' + timestamp)}`);

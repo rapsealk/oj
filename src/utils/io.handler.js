@@ -11,42 +11,52 @@ module.exports = io => {
 			console.log('data:', code);
 
 			// check if dir "submits" exists.
+			const dirname = path.join(__dirname, '../submits');
 			try {
-				fs.statSync('submits');
+				fs.statSync(dirname);
 			} catch (e) {
-				if (e.errno === -4058) fs.mkdirSync('submits');
+				if (e.code === 'ENOENT') fs.mkdirSync(dirname);
 			}
 
 			// Promise
 			const timestamp = Date.now();
-			const filename = `submits/${timestamp}.c`;
+			const filename = `${timestamp}.c`;
 
-			fs.writeFileSync(filename, code, 'utf-8');
+			fs.writeFileSync(`${dirname}/${filename}`, code, 'utf-8');
 
 			let isCompileSuccessful = true;
 
 			// compile
-			const compile = spawn('gcc', [filename, '-o', `submits/${timestamp}`]);
-			compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
-			compile.stderr.on('data', data => {
-				isCompileSuccessful = false;
-				console.log('[compile:stderr]:', data.toString('utf-8'));
-				socket.emit('error', data.toString('utf-8'));
-			});
-			compile.on('close', code => {
-				console.log('[compile:close]:', code);
+			try {
+				const compile = spawn('gcc', [filename, '-o', `${dirname}/${timestamp}`]);
+				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
+				compile.stderr.on('data', data => {
+					isCompileSuccessful = false;
+					console.log('[compile:stderr]:', data.toString('utf-8'));
+					socket.emit('error', data.toString('utf-8'));
+				});
+				compile.on('close', code => {
+					console.log('[compile:close]:', code);
+	
+					if (!isCompileSuccessful) return;
+	
+					// execute
+					try {
+						const execute = spawn(`${path.join(__dirname, '../submits/' + timestamp)}`);
+						execute.stdout.on('data', data => console.log('[execute:stdout]:', data.toString('utf-8')));
+						execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
+						execute.on('error', message => console.log('[execute:error]:', message));
+						execute.on('close', code => console.log('[execute:close]:', code));
+					} catch (e) {
+						console.log('[execute_error]:', e);
+						throw e;
+					}
+				});
+			} catch (e) {
+				console.log('[compile_error]:', e);
+			}
 
-				if (!isCompileSuccessful) return;
-
-				// execute
-				const execute = spawn(`${path.join(__dirname, '../submits/' + timestamp)}`);
-				execute.stdout.on('data', data => console.log('[execute:stdout]:', data.toString('utf-8')));
-				execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
-				execute.on('error', message => console.log('[execute:error]:', message));
-				execute.on('close', code => console.log('[execute:close]:', code));
-			});
-
-			socket.emit('result', 'hello world!');
+			// socket.emit('result', 'hello world!');
 		});
 
 		socket.on('disconnect', () => {

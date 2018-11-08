@@ -267,6 +267,11 @@
                 submitButton.disabled = false;
             });
 
+			socket.on('correct', data => {
+				alertNodeGenerator('info', data);
+				submitButton.disabled = false;
+			});
+
             submitButton.addEventListener('click', function(e) {
 				// lock
                 submitButton.disabled = true;

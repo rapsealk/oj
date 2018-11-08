@@ -32,7 +32,7 @@ module.exports = io => {
 				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
 				compile.stderr.on('data', data => {
 					isCompileSuccessful = false;
-					data = data.toString('utf-8').split(':').splice(1).join(':');
+					data = data.toString('utf-8').split(':').slice(1).join(':');
 					console.log('[compile:stderr]:', data);
 					socket.emit('cperror', data);
 					compile.kill('SIGKILL');
@@ -45,15 +45,19 @@ module.exports = io => {
 
 					// execute
 					const inputs = fs.readFileSync(`${dirname}/20181109_in.txt`, { encoding: 'utf-8' }).split('\n');
+					inputs.pop();
 					const answers = fs.readFileSync(`${dirname}/20181109_out.txt`, { encoding: 'utf-8' }).split('\n');
 					inputs.forEach((input, index) => {
-						const execute = spawn(`${dirname}/${timestamp}`, inputs.split(' '));
+						const execute = spawn(`${dirname}/${timestamp}`, input.split(' '));
 						execute.stdout.on('data', data => {
-							const equals = (data.toString('utf-8') == answers[index]);
-							console.log('[execute:stdout]:', data.toString('utf-8'), '[expected]:', answers[index], '[equals]:', equals);
+							data = data.toString('utf-8').replace('\n', '');
+							const equals = (data == answers[index]);
+							console.log('[execute:stdout]:', data, '[expected]:', answers[index], '[equals]:', equals);
 							if (!equals) {
-								socket.emit('exerror', `Input: ${input}, Expected: ${answers[index]}, Output: ${data.toString('utf-8')}`);
+								socket.emit('exerror', `Input: ${input}, Expected: ${answers[index]}, Output: ${data}`);
 								execute.kill('SIGKILL');
+							} else {
+								socket.emit('correct', `Input: ${input}, Expected: ${answers[index]}, Output: ${data}`);
 							}
 						});
 						execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));

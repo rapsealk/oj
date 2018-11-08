@@ -28,21 +28,26 @@ module.exports = io => {
 
 			// compile
 			try {
-				const compile = spawn('gcc', [filename, '-o', `${dirname}/${timestamp}`]);
+				const compile = spawn('gcc', [`${dirname}/${filename}`, '-o', `${dirname}/${timestamp}`]);
 				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
 				compile.stderr.on('data', data => {
 					isCompileSuccessful = false;
-					console.log('[compile:stderr]:', data.toString('utf-8'));
-					socket.emit('error', data.toString('utf-8'));
+					data = data.toString('utf-8').split(':');
+					data.shift();
+					data = data.join(':');
+					console.log('[compile:stderr]:', data);
+					socket.emit('cperror', data);
 				});
+				compile.on('error', message => console.log('[compile:error]:', message));
 				compile.on('close', code => {
 					console.log('[compile:close]:', code);
 	
 					if (!isCompileSuccessful) return;
 	
 					// execute
+					/*
 					try {
-						const execute = spawn(`${path.join(__dirname, '../submits/' + timestamp)}`);
+						const execute = spawn(`${dirname}/${timestamp}`);
 						execute.stdout.on('data', data => console.log('[execute:stdout]:', data.toString('utf-8')));
 						execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
 						execute.on('error', message => console.log('[execute:error]:', message));
@@ -51,6 +56,7 @@ module.exports = io => {
 						console.log('[execute_error]:', e);
 						throw e;
 					}
+					*/
 				});
 			} catch (e) {
 				console.log('[compile_error]:', e);

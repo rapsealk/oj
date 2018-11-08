@@ -84,6 +84,7 @@
                     
                         <!-- alert -->
                         <div id="alert-zone">
+							<!--
                             <div class="alert alert-success">
                                 <div class="container-fluid">
                                     <div class="alert-icon">
@@ -119,6 +120,7 @@
                                     <b>Error Alert:</b> Damn man! You screwed up the server this time. You should find a good excuse for your Boss...
                                 </div>
                             </div>
+							-->
                         </div>
                     
                     </div>
@@ -243,7 +245,7 @@
                 
                 buttonNode.appendChild(spanNode);
                 
-                alertNode.append('asdfasdfasdf');
+                alertNode.append(message);
                 alertNode.appendChild(buttonNode);
                 
                 rootNode.appendChild(alertNode);
@@ -255,7 +257,8 @@
             var socket = io();
             var submitButton = document.getElementById('btn-submit');
 
-            socket.on('error', data => {
+            socket.on('cperror', data => {
+				console.log('socket:on[error]:', data);
                 alertNodeGenerator('danger', data);
                 submitButton.disabled = false;
             });

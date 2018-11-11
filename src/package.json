@@ -15,7 +15,7 @@
 		"express": "^4.16.3",
 		"moment": "^2.22.2",
 		"monaco-editor": "^0.14.3",
-		"morgan": "^1.9.0",
+		"morgan": "^1.9.1",
 		"serve-favicon": "~2.4.2",
 		"socket.io": "^2.1.1"
 	}

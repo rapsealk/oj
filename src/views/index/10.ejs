@@ -39,9 +39,13 @@
 
         	<div class="collapse navbar-collapse" id="navigation-example">
         		<ul class="nav navbar-nav navbar-right">
+                    <% history.forEach(week => { %>
                     <li>
-                        last update: <%= update %>
+                        <a data-placement="bottom" href="/?week=<%= week %>" class="btn btn-white btn-simple btn-just-icon">
+                            week <%= week %>
+                        </a>
                     </li>
+                    <% }); %>
 					<li>
 						<a rel="tooltip" title="Follow and star me on Github" data-placement="bottom" href="https://github.com/rapsealk/zero-to-one" target="_blank" class="btn btn-white btn-simple btn-just-icon">
 							<i class="fa fa-github"></i>

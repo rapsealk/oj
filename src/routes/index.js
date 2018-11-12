@@ -4,7 +4,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const filelist = fs.readdirSync(path.join(__dirname, '../views/index'))
-					.map(filename => parseInt(filename.split('.').shift()));
+					.map(filename => filename.split('.').shift());
 
 const moment = require('moment');
 
@@ -14,14 +14,15 @@ router.get('/', async function(req, res) {
 
 	const { week } = req.query;
 	if (week === undefined || isNaN(week)) {
-		const currentWeek = Math.floor((moment() - moment('2018-09-07')) / milliseconds / 7) + 1;
+		const currentWeek = Math.floor((moment() - moment('2018/09/07')) / milliseconds / 7) + 1;
 		return res.redirect(`?week=${currentWeek}`);
 	}
 
-	if (week in filelist) {
+	if (filelist.includes(week)) {
 		res.render(`index/${week}`, {
 			update: moment(process.env.BOOT_TIME).format('YYYY-MM-DD HH:mm'),
-			samples: iosamples[week]
+			//samples: iosamples[week]
+			history: filelist
 		});
 	} else {
 		res.render('error');

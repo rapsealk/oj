@@ -8,7 +8,14 @@
 
 	<title>10주차 calendar | 프로그래밍입문</title>
 
-	<meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#87CEFA">
+    <!-- Open Graph -->
+    <meta property="og:title" content="10주차 calendar | 프로그래밍입문">
+    <meta property="og:description" content="10주차 calendar 자동 채점기 by rapsealk.">
+    <meta property="og:image" content="/img/venezia.jpg">
 
 	<!--     Fonts and icons     -->
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
@@ -108,10 +115,10 @@
                             <hr>
                             <!-- Dynamic request -->
                             <div class="col-md-6">
-                                <pre class="prettyprint" id="sample-input">// 입력<br>calendar 1945.8.15 2017.8.15<br>calendar 2017.8.28 1000<br>calendar 1919.3.1</pre>
+                                <pre class="prettyprint" id="sample-input"></pre>
                             </div>
                             <div class="col-md-6">
-                                <pre class="prettyprint" id="sample-output">// 출력<br>경과 일수: 26298일<br>경과 날짜: 2020년 5월 24일<br>토요일</pre>
+                                <pre class="prettyprint" id="sample-output"></pre>
                             </div>                    
                         </div>
                         <div class="modal-footer">
@@ -172,6 +179,12 @@
 					'}'
 				].join('\n'),
 				language: 'c'
+            });
+
+            // IO sample data
+            $.get('/samples?week=<%= week %>', function(snapshot) {
+                document.getElementById('sample-input').innerHTML = snapshot.data.inputs.join('<br>');
+                document.getElementById('sample-output').innerHTML = snapshot.data.outputs.join('<br>');
             });
 
             // Alert Generator

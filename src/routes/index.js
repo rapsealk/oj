@@ -20,8 +20,7 @@ router.get('/', async function(req, res) {
 
 	if (filelist.includes(week)) {
 		res.render(`index/${week}`, {
-			update: moment(process.env.BOOT_TIME).format('YYYY-MM-DD HH:mm'),
-			//samples: iosamples[week]
+			week: week,
 			history: filelist
 		});
 	} else {

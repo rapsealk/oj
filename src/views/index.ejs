@@ -6,15 +6,15 @@
 	<link rel="icon" type="image/jpeg" href="/img/zto.jpg">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 
-	<title>10주차 calendar | 프로그래밍입문</title>
+	<title><%= week %>주차 <%= title %> | 프로그래밍입문</title>
 
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
     
     <!-- Theme Color -->
     <meta name="theme-color" content="#87CEFA">
     <!-- Open Graph -->
-    <meta property="og:title" content="10주차 calendar | 프로그래밍입문">
-    <meta property="og:description" content="10주차 calendar 자동 채점기 by rapsealk.">
+    <meta property="og:title" content="<%= week %>주차 <%= title %> | 프로그래밍입문">
+    <meta property="og:description" content="<%= week %>주차 <%= title %> 자동 채점기 by rapsealk.">
     <meta property="og:image" content="/img/venezia.jpg">
 
 	<!--     Fonts and icons     -->
@@ -41,12 +41,12 @@
 		            <span class="icon-bar"></span>
 		            <span class="icon-bar"></span>
         		</button>
-        		<a class="navbar-brand" href="/">10주차 calendar</a>
+        		<a class="navbar-brand" href="/"><%= week %>주차 <%= title %></a>
         	</div>
 
         	<div class="collapse navbar-collapse" id="navigation-example">
         		<ul class="nav navbar-nav navbar-right">
-                    <% history.forEach(week => { %>
+                    <% weeks.forEach(week => { %>
                     <li>
                         <a data-placement="bottom" href="/?week=<%= week %>" class="btn btn-white btn-simple btn-just-icon">
                             week <%= week %>
@@ -71,7 +71,7 @@
 						<div class="card card-signup">
 							<form class="form" action="#!">
 								<div class="header header-info text-center">
-									<h4>gcc ONLY!</h4>
+									<h4>gcc -std=c99 -Wall -static</h4>
 								</div>
 								<div class="content">
 									<div class="input-group col-md-8">
@@ -254,7 +254,10 @@
             submitButton.addEventListener('click', function(e) {
 				// lock
                 submitButton.disabled = true;
-                socket.emit('data', editor.getValue());
+                socket.emit('data', {
+                    week: "<%= week %>",
+                    code: editor.getValue()
+                });
             });
         });
     </script>

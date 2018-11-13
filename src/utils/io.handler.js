@@ -28,6 +28,7 @@ const execution = {
 	"11": function(dirname, timestamp, socket) {
 		
 		const inputs = fs.readFileSync(`${dirname}/20181116_in.txt`, { encoding: 'utf-8' }).split('\n');
+		inputs.pop();
 		const answers = fs.readFileSync(`${dirname}/20181116_out.txt`, { encoding: 'utf-8' }).split('\n');
 
 		inputs.forEach((input, index) => {

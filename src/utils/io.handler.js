@@ -2,6 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+const gcc = require('./gcc');
+
 const execution = {
 	"10": function(dirname, timestamp, socket) {
 		const inputs = fs.readFileSync(`${dirname}/20181109_in.txt`, { encoding: 'utf-8' }).split('\n');
@@ -77,7 +79,8 @@ module.exports = io => {
 
 			// compile
 			try {
-				const compile = spawn('gcc', [`${dirname}/${filename}`, '-o', `${dirname}/${timestamp}`, '-std=c99', '-static']);	// -O2, -Wall
+				const gccOptions = [`${dirname}/${filename}`, '-o', `${dirname}/${timestamp}`].concat(gcc.split(' '));
+				const compile = spawn('gcc', gccOptions);	// -O2, -Wall
 				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
 				compile.stderr.on('data', data => {
 					isCompileSuccessful = false;

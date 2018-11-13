@@ -3,6 +3,7 @@ const router = express.Router();
 
 const weeks = Object.keys(require('../utils/io.samples.json'));
 const titles = require('../utils/titles.json');
+const gcc = require('../utils/gcc');
 
 const moment = require('moment');
 
@@ -25,6 +26,7 @@ router.get('/', async function(req, res) {
 		res.render('index', {
 			week,
 			weeks,
+			gcc,
 			title: titles[week]
 		});
 	} else {

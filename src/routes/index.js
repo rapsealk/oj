@@ -13,7 +13,7 @@ router.get('/', async function(req, res) {
 
 	const { week, admin } = req.query;
 
-	const currentWeek = Math.floor((moment() - moment('2018/09/07')) / milliseconds / 7) + 1;
+	const currentWeek = Math.floor((moment() - moment('2018-09-07 11:00')) / milliseconds / 7) + 1;
 
 	if (week === undefined || isNaN(week)) {
 		return res.redirect(`?week=${currentWeek}`);

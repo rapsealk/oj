@@ -254,6 +254,7 @@
             submitButton.addEventListener('click', function(e) {
 				// lock
                 submitButton.disabled = true;
+				document.getElementById('alert-zone').innerHTML = '';
                 socket.emit('data', {
                     week: "<%= week %>",
                     code: editor.getValue()

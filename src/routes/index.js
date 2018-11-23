@@ -30,7 +30,7 @@ router.get('/', async function(req, res) {
 			title: titles[week]
 		});
 	} else {
-		res.render('error');
+		res.redirect(`?week=${weeks[weeks.length-1]}`);
 	}
 });
 

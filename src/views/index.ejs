@@ -6,15 +6,15 @@
 	<link rel="icon" type="image/jpeg" href="/img/zto.jpg">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 
-	<title><%= week %>주차 <%= title %> | 프로그래밍입문</title>
+	<title>실습평가 | 프로그래밍입문</title>
 
     <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
     
     <!-- Theme Color -->
     <meta name="theme-color" content="#87CEFA">
     <!-- Open Graph -->
-    <meta property="og:title" content="<%= week %>주차 <%= title %> | 프로그래밍입문">
-    <meta property="og:description" content="<%= week %>주차 <%= title %> 자동 채점기 by rapsealk.">
+    <meta property="og:title" content="실습평가 | 프로그래밍입문">
+    <meta property="og:description" content="실습평가 자동 채점기 by rapsealk.">
     <meta property="og:image" content="/img/venezia.jpg">
 
 	<!--     Fonts and icons     -->
@@ -41,23 +41,36 @@
 		            <span class="icon-bar"></span>
 		            <span class="icon-bar"></span>
         		</button>
-        		<a class="navbar-brand" href="/"><%= week %>주차 <%= title %></a>
+        		<a class="navbar-brand" href="/">프로그래밍입문 실습평가</a>
         	</div>
 
         	<div class="collapse navbar-collapse" id="navigation-example">
         		<ul class="nav navbar-nav navbar-right">
-                    <% weeks.forEach(week => { %>
+                    <!-- TODO: Quiz
+                    < weeks.forEach(week => { >
                     <li>
-                        <a data-placement="bottom" href="/?week=<%= week %>" class="btn btn-white btn-simple btn-just-icon">
-                            week <%= week %>
+                        <a data-placement="bottom" href="/?week=<= week >" class="btn btn-white btn-simple btn-just-icon">
+                            week <= week >
                         </a>
                     </li>
-                    <% }); %>
-					<li>
+                    < }); >
+                    -->
+                    <li>
+                        <a data-placement="bottom" href="/quiz/1" class="btn btn-white btn-simple btn-just-icon">
+                            Quiz 1
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a data-placement="bottom" href="/" class="btn btn-white btn-simple btn-just-icon" style="background-color: black;">
+                            <%= studentNumber %>
+                        </a>
+                    </li>
+					<!--li>
 						<a rel="tooltip" title="Follow and star me on Github" data-placement="bottom" href="https://github.com/rapsealk/zero-to-one" target="_blank" class="btn btn-white btn-simple btn-just-icon">
 							<i class="fa fa-github"></i>
 						</a>
-					</li>
+					</li-->
         		</ul>
         	</div>
     	</div>
@@ -181,11 +194,13 @@
 				language: 'c'
             });
 
-            // IO sample data
-            $.get('/samples?week=<%= week %>', function(snapshot) {
+            // TODO: IO sample data
+            /*
+            $.get('/samples?week=<= week >', function(snapshot) {
                 document.getElementById('sample-input').innerHTML = snapshot.data.inputs.join('<br>');
                 document.getElementById('sample-output').innerHTML = snapshot.data.outputs.join('<br>');
             });
+            */
 
             // Alert Generator
             // type: [success, warning, danger]
@@ -256,7 +271,8 @@
                 submitButton.disabled = true;
 				document.getElementById('alert-zone').innerHTML = '';
                 socket.emit('data', {
-                    week: "<%= week %>",
+                    // TODO
+                    // week: "<= week >",
                     code: editor.getValue()
                 });
             });

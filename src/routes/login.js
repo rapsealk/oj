@@ -12,7 +12,7 @@ router.get('/', (req, res) => {
         return res.redirect('/');
     }
 
-    const message = '';
+    const message = '지급된 비밀번호를 입력해주세요.';
 
 	res.render('login', { message });
 });

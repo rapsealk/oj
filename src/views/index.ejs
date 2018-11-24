@@ -41,7 +41,7 @@
 		            <span class="icon-bar"></span>
 		            <span class="icon-bar"></span>
         		</button>
-        		<a class="navbar-brand" href="/">프로그래밍입문 실습평가</a>
+        		<a class="navbar-brand" href="/">2018 프로그래밍입문 실습평가</a>
         	</div>
 
         	<div class="collapse navbar-collapse" id="navigation-example">
@@ -145,15 +145,15 @@
 		        <div class="container">
 		            <nav class="pull-left">
 						<ul>
-							<li>
+							<!--li>
 								<a href="https://rapsealk.tistory.com">
 								   Blog
 								</a>
-							</li>
+							</li-->
 						</ul>
 		            </nav>
 		            <div class="copyright pull-right">
-		                &copy; <%= new Date().getFullYear() %>, made with <i class="fa fa-heart heart"></i> by <a href="https://github.com/rapsealk" target="_blank">Kang</a>
+		                &copy; <%= new Date().getFullYear() %>, made with <i class="fa fa-heart heart"></i> by <a href="#" target="_blank">Kang</a>
 		            </div>
 		        </div>
 		    </footer>
@@ -195,6 +195,8 @@
             });
 
             // TODO: IO sample data
+            document.getElementById('sample-input').innerHTML = '// 입력';
+            document.getElementById('sample-output').innerHTML = '// 출력';
             /*
             $.get('/samples?week=<= week >', function(snapshot) {
                 document.getElementById('sample-input').innerHTML = snapshot.data.inputs.join('<br>');
@@ -273,8 +275,12 @@
                 socket.emit('data', {
                     // TODO
                     // week: "<= week >",
+                    pid: 1,
+                    studentNumber: <%= studentNumber %>,
                     code: editor.getValue()
                 });
+				// unlock
+                submitButton.disabled = false;
             });
         });
     </script>

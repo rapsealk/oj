@@ -2,55 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const gcc = require('./gcc');
-
-const execution = {
-	"10": function(dirname, timestamp, socket) {
-		const inputs = fs.readFileSync(`${dirname}/20181109_in.txt`, { encoding: 'utf-8' }).split('\n');
-		inputs.pop();
-		const answers = fs.readFileSync(`${dirname}/20181109_out.txt`, { encoding: 'utf-8' }).split('\n');
-		inputs.forEach((input, index) => {
-			const execute = spawn(`${dirname}/${timestamp}`, input.split(' '));
-			execute.stdout.on('data', data => {
-				data = data.toString('utf-8').replace('\n', '');
-				const equals = (data == answers[index]);
-				console.log('[execute:stdout]:', data, '[expected]:', answers[index], '[equals]:', equals);
-				if (!equals) {
-					socket.emit('exerror', `Input: ${input}, Expected: ${answers[index]}, Output: ${data}`);
-					execute.kill('SIGKILL');
-				} else {
-					socket.emit('correct', `Input: ${input}, Expected: ${answers[index]}, Output: ${data}`);
-				}
-			});
-			execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
-			execute.on('error', message => console.log('[execute:error]:', message));
-			execute.on('close', code => console.log('[execute:close]:', code));
-		});
-	},
-	"11": function(dirname, timestamp, socket) {
-		
-		const inputs = fs.readFileSync(`${dirname}/20181116_in.txt`, { encoding: 'utf-8' }).split('\n');
-		inputs.pop();
-		const answers = fs.readFileSync(`${dirname}/20181116_out.txt`, { encoding: 'utf-8' }).split('\n');
-
-		inputs.forEach((input, index) => {
-			const execute = spawn(`${dirname}/${timestamp}`);
-			execute.stdout.on('data', data => {
-				data = data.toString('utf-8').replace('\n', '');
-				console.log('[execute:stdout]:', data);
-				const topic = (data == answers[index]) ? 'correct' : 'exerror';
-				socket.emit(topic, `Expected: ${answers[index]}, Output: ${data}`);
-			});
-			execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
-			execute.on('error', message => console.log('[execute:error]:', message));
-			execute.on('close', code => console.log('[execute:close]:', code));
-	
-			execute.stdin.setEncoding('utf-8');
-			execute.stdin.write(input+'\n');
-			execute.stdin.end();
-		});
-	}
-};
+const __submission = path.join(__dirname, "../submission");
 
 module.exports = io => {
 
@@ -59,47 +11,68 @@ module.exports = io => {
 
 		socket.on('data', data => {
 
-			const { week, code } = data;
+			const { pid, studentNumber, code } = data;
 
-			// check if dir "submits" exists.
-			const dirname = path.join(__dirname, '../submits');
+			console.log('pid:', pid);
+			console.log('studentNumber:', studentNumber);
+			console.log('=========== code ===========');
+			console.log(code + '\n');
+
+			/*
+			// Check if directory "submission" already exists.
+			const __submission = path.join(__dirname, "../submission");
 			try {
-				fs.statSync(dirname);
+				fs.statSync(__submission);
 			} catch (e) {
-				if (e.code === 'ENOENT') fs.mkdirSync(dirname);
+				if (e.code === "ENOENT") fs.mkdirSync(__submission);
 			}
 
-			// Promise
-			const timestamp = Date.now();
-			const filename = `${timestamp}.c`;
-
-			fs.writeFileSync(`${dirname}/${filename}`, code, 'utf-8');
-
-			let isCompileSuccessful = true;
-
-			// compile
+			// Check if directory name of student number.
+			const __sdir = path.join(__submission, `${studentNumber}`);
 			try {
-				const gccOptions = [`${dirname}/${filename}`, '-o', `${dirname}/${timestamp}`].concat(gcc.split(' '));
-				const compile = spawn('gcc', gccOptions);	// -O2, -Wall
-				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
-				compile.stderr.on('data', data => {
-					isCompileSuccessful = false;
-					data = data.toString('utf-8').split(':').slice(1).join(':');
-					console.log('[compile:stderr]:', data);
-					socket.emit('cperror', data);
-					compile.kill('SIGKILL');
-				});
-				compile.on('error', message => console.log('[compile:error]:', message));
-				compile.on('close', code => {
-					console.log('[compile:close]:', code);
-	
-					if (!isCompileSuccessful) return;
-
-					// execute
-					execution[week](dirname, timestamp, socket);
-				});
+				fs.statSync(__sdir);
 			} catch (e) {
-				console.log('[compile_error]:', e);
+				if (e.code === "ENOENT") fs.mkdirSync(__sdir);
+			}
+			*/
+
+			const codename = `${__submission}\\${studentNumber}\\${pid}.c`;
+			fs.writeFileSync(codename, code, 'utf-8');
+			console.log('codename:', codename);
+
+			try {
+				// Compile
+				const compileArgs = [`${pid}.c`];
+				const compileOptions = { cwd: path.join(__dirname, `../submission/${studentNumber}`) };
+				const compileProcess = spawn('cl', compileArgs, compileOptions);
+				compileProcess.stdout.on('data', data => console.log('[Compile::STDOUT]:', data.toString('utf-8')));
+				compileProcess.stderr.on('data', data => console.log('[Compile::STDERR]:', data.toString('utf-8')));
+				compileProcess.on('error', message => console.log('[Compile::ERROR]:', message));
+				compileProcess.on('close', code => {
+					console.log('[Compile::CLOSE]:', code);
+					fs.unlink(`${__submission}/${studentNumber}/${pid}.obj`, console.error);
+
+					try {
+						// Run
+						const executable = `${pid}.exe`;
+						const executionArgs = [];
+						const executionOptions = { cwd: path.join(__dirname, `../submission/${studentNumber}`) };
+						const executionProcess = spawn(executable, executionArgs, executionOptions);
+						executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
+						executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+						executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+						executionProcess.on('close', code => {
+							console.log('[Execution::CLOSE]:', code);
+							fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+						});
+					}
+					catch (error) {
+						throw error;
+					}
+				});
+			}
+			catch (error) {
+				console.log('[Compile::Error]:', error);
 			}
 		});
 

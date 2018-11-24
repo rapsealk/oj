@@ -21,14 +21,15 @@
     <link href="/css/bootstrap.min.css" rel="stylesheet" />
     <link href="/css/material-kit.css" rel="stylesheet"/>
 
+	<!-- Hide input:number spinner -->
     <style rel="stylesheet">
-        /*
+		/* Chrome */
         input[type=number]::-webkit-inner-spin-button,
         input[type=number]::-webkit-outer-spin-button {
             -webkit-appearance: none;
             margin: 0;
         }
-        */
+		/* Firefox */
         input[type=number] {
             -moz-appearance: textfield;
         }
@@ -47,16 +48,16 @@
 		            <span class="icon-bar"></span>
 		            <span class="icon-bar"></span>
         		</button>
-        		<a class="navbar-brand" href="/">프로그래밍입문 실습평가</a>
+        		<a class="navbar-brand" href="/">2018 프로그래밍입문 실습평가</a>
         	</div>
 
         	<div class="collapse navbar-collapse" id="navigation-example">
         		<ul class="nav navbar-nav navbar-right">
-					<li>
+					<!--li>
 						<a rel="tooltip" title="Follow and star us on Github" data-placement="bottom" href="https://github.com/kaunet" target="_blank" class="btn btn-white btn-simple btn-just-icon">
 							<i class="fa fa-github"></i>
 						</a>
-					</li>
+					</li-->
         		</ul>
         	</div>
     	</div>
@@ -69,8 +70,8 @@
 					<div class="col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3">
 						<div class="card card-signup">
 							<form class="form" action="/login" method="post">
-								<div class="header header-primary text-center">
-									<h4>Login</h4>
+								<div class="header header-cyan text-center">
+									<h4 style="font-weight: bolder;">로그인</h4>
 								</div>
 								<div class="content">
 									<div class="input-group">
@@ -94,7 +95,7 @@
 								</div>
 								<div class="row">
 									<div class="col-md-8 col-md-offset-4">
-										<button class="btn btn-primary">Login</button>
+										<button class="btn btn-info">로그인</button>
 									</div>
 								</div>
 								<!--div class="row text-center">
@@ -112,7 +113,7 @@
 		        <div class="container">
 		            <nav class="pull-left">
 						<ul>
-							<li>
+							<!--li>
 								<a href="https://github.com/kaunet">
 								   About Us
 								</a>
@@ -126,11 +127,11 @@
 								<a href="http://www.creative-tim.com/license">
 									Licenses
 								</a>
-							</li>
+							</li-->
 						</ul>
 		            </nav>
 		            <div class="copyright pull-right">
-		                &copy; <%= new Date().getFullYear() %>, made with <i class="fa fa-heart heart"></i> by <a href="https://github.com/kaunet" target="_blank">Kaunet</a>
+		                &copy; <%= new Date().getFullYear() %>, made with <i class="fa fa-heart heart"></i> by <a href="#" target="_blank">Kang</a>
 		            </div>
 		        </div>
 		    </footer>

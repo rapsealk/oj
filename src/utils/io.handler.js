@@ -17,26 +17,25 @@ const runway = {
 			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
 			const executionProcess = spawn(executable, executionArgs, executionOptions);
 			executionProcess.stdin.setDefaultEncoding('utf-8');
-			//executionProcess.stdout.setDefaultEncoding('utf-8');
+			executionProcess.stdout.setDefaultEncoding('utf-8');
 			executionProcess.stderr.setDefaultEncoding('utf-8');
 			const outputs = data[`${pid}`].output.slice(0);
-			executionProcess.stdout.on('data', dum => {
-				// const output = dum.toString('utf-8').replace(/\s+$/, "");	// rtrim
-				// console.log('[Execution::STDOUT]:', output);
-				stdout += dum.toString('utf-8');
-			});
+			executionProcess.stdout.on('data', dum => stdout += dum.toString('utf-8'));
 			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
 			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
 			executionProcess.on('close', code => {
 				console.log('[Execution::CLOSE]:', code);
 				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 
-				socket.emit('correct', 'Hello world!');
 				// CRLF
 				stdout = stdout.split('\r\n').map(od => od.replace(/\s+$/, ""));
 				stdout.pop();
-				// socket.emit('correct', `result: ${(stdout.join(' ') === outputs.join(' '))}`);
+
 				const condition = (stdout.join(' ') === outputs.join(' '));
+				if (condition)
+					socket.emit('correct', '맞았습니다.');
+				else
+					socket.emit('exerror', '틀렸습니다.');
 			});
 		}
 		catch (error) {
@@ -44,11 +43,103 @@ const runway = {
 			socket.emit('exerror', error.code);
 		}
 	},
-	"2": (socket, { pid, studnetNumber }) => {
+	"2": (socket, { pid, studentNumber }) => {
+
+		const raw_inputs = data[`${pid}`].input.slice(0);
+		const outputs = data[`${pid}`].output.slice(0);
+
+		const inputs = [];
+		for (let i = 0; i < raw_inputs.length; i += 2) {
+			inputs.push([raw_inputs[i], raw_inputs[i+1]]);
+		}
+
+		const result = outputs.map(o => false);
+		const caseCount = inputs.length;
+		let closeCount = 0;
+
+		inputs.forEach((input, idx) => {
+			try {
+				const executable = `${pid}.exe`;
+				const executionArgs = [];
+				const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+				const executionProcess = spawn(executable, executionArgs, executionOptions);
+				executionProcess.stdin.setDefaultEncoding('utf-8');
+				executionProcess.stdout.setDefaultEncoding('utf-8');
+				executionProcess.stderr.setDefaultEncoding('utf-8');
+				executionProcess.stdout.on('data', data => {
+					data = data.toString('utf-8').replace('\r\n', '');
+					console.log('[Execution::STDOUT]:', data);
+
+					result[idx] = (data == outputs[idx]);
+				});
+				executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+				executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+				executionProcess.on('close', code => {
+					console.log('[Execution::CLOSE]:', code);
+					
+					closeCount += 1;
+					if (closeCount == caseCount) {
+						if (result.filter(r => r == true).length == result.length)
+							socket.emit('correct', '맞았습니다.');
+						else
+							socket.emit('exerror', '틀렸습니다.');
+						fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+					}
+				});
+
+				executionProcess.stdin.write(input[0] + '\n');
+				executionProcess.stdin.write(input[1] + '\n');
+				executionProcess.stdin.end();
+			}
+			catch (error) {
+				socket.emit('exerror', error.code);
+			}
+		});
+	},
+	"3": (socket, { pid, studentNumber }) => {
 		const executable = `${pid}.exe`;
 			const executionArgs = [];
 			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
 			const executionProcess = spawn(executable, executionArgs, executionOptions);
+			executionProcess.stdin.setDefaultEncoding('utf-8');
+			executionProcess.stdout.setDefaultEncoding('utf-8');
+			executionProcess.stderr.setDefaultEncoding('utf-8');
+			executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
+			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+			executionProcess.on('close', code => {
+				console.log('[Execution::CLOSE]:', code);
+				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+				socket.emit('correct', 'Hello world!');
+			});
+	},
+	"4": (socket, { pid, studentNumber }) => {
+		const executable = `${pid}.exe`;
+			const executionArgs = [];
+			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+			const executionProcess = spawn(executable, executionArgs, executionOptions);
+			executionProcess.stdin.setDefaultEncoding('utf-8');
+			executionProcess.stdout.setDefaultEncoding('utf-8');
+			executionProcess.stderr.setDefaultEncoding('utf-8');
+			executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
+			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+			executionProcess.on('close', code => {
+				console.log('[Execution::CLOSE]:', code);
+				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+				socket.emit('correct', 'Hello world!');
+			});
+	},
+	"5": (socket, { pid, studentNumber }) => {
+		const executable = `${pid}.exe`;
+			const executionArgs = [];
+			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+			const executionProcess = spawn(executable, executionArgs, executionOptions);
+			executionProcess.stdin.setDefaultEncoding('utf-8');
+			executionProcess.stdout.setDefaultEncoding('utf-8');
+			executionProcess.stderr.setDefaultEncoding('utf-8');
 			executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
 			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
 			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));

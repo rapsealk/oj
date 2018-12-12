@@ -32,14 +32,17 @@ router.get('/problem/:pid', async (req, res) => {
 		return res.redirect('/login');
 	}
 
-	const decoded = jwt.verify(token, req.app.get('jwt-secret'));
-	console.log('decoded:', decoded);
-	// expired
-	if (!decoded) {
-		return res.redirect('/login');
+	try {
+		const decoded = jwt.verify(token, req.app.get('jwt-secret'));
+		console.log('decoded:', decoded);
+		if (!decoded) return res.redirect('/login');
+		res.render('index', { pid, studentNumber: decoded.studentNumber });
 	}
-
-	res.render('index', { pid, studentNumber: decoded.studentNumber });
+	catch (error) {
+		console.log(error.name);
+		if (error.name === 'TokenExpiredError')
+			return res.redirect('/login');
+	}
 });
 
 module.exports = router;

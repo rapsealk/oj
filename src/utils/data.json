@@ -12,10 +12,14 @@
     },
     "2": {
         "input": [
-
+            "Certainly not", "Can't rely on it.",
+            "Harry potter", "puppet pal",
+            "Done!", "O' end"
         ],
         "output": [
-
+            "OK",
+            "NO",
+            "OK"
         ]
     },
     "3": {

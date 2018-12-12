@@ -7,10 +7,12 @@ const students = require('../utils/students.json');
 
 router.get('/', (req, res) => {
 
+    /*
     const { token } = req.cookies;
     if (token !== undefined && jwt.verify(token, req.app.get('jwt-secret'))) {
         return res.redirect('/');
     }
+    */
 
     const message = '지급된 비밀번호를 입력해주세요.';
 

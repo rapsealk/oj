@@ -96,23 +96,57 @@ const runway = {
 			}
 		});
 	},
+	// FIXME: Windows Defender 실시간 검사에서 문제 발생
 	"3": (socket, { pid, studentNumber }) => {
-		const executable = `${pid}.exe`;
-			const executionArgs = [];
-			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
-			const executionProcess = spawn(executable, executionArgs, executionOptions);
-			executionProcess.stdin.setDefaultEncoding('utf-8');
-			executionProcess.stdout.setDefaultEncoding('utf-8');
-			executionProcess.stderr.setDefaultEncoding('utf-8');
-			executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
-			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
-			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
-			executionProcess.on('close', code => {
-				console.log('[Execution::CLOSE]:', code);
-				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 
-				socket.emit('correct', 'Hello world!');
-			});
+		const cases = data[`${pid}`];
+		const result = cases.map(c => false);
+		let closeCount = 0;
+
+		cases.forEach((_case, index) => {
+			try {
+				const executable = `${pid}.exe`;
+				const executionArgs = [];
+				const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+				const executionProcess = spawn(executable, executionArgs, executionOptions);
+				executionProcess.stdin.setDefaultEncoding('utf-8');
+				executionProcess.stdout.setDefaultEncoding('utf-8');
+				executionProcess.stderr.setDefaultEncoding('utf-8');
+				executionProcess.stdout.on('data', data => {
+					data = data.toString('utf-8').split('\r\n').map(it => it.replace(/\s+$/, ''));
+					data.pop();
+					let succeed = true;
+					for (let i = 0; i < data.length; i++) {
+						console.log([data[i], _case.output[i]]);
+						console.log('matches:', data[i] == _case.output[i]);
+						succeed &= (data[i] == _case.output[i]);
+					}
+					result[index] = succeed;
+				});
+				executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+				executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+				executionProcess.on('close', code => {
+					console.log('[Execution::CLOSE]:', code);
+
+					closeCount += 1;
+					if (closeCount == cases.length) {
+						// fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+						if (result.length == result.filter(r => r).length)
+							socket.emit('correct', '맞았습니다.');
+						else
+							socket.emit('exerror', '틀렸습니다')
+					}
+				});
+
+				executionProcess.stdin.write(_case.input + '\n');
+				executionProcess.stdin.end();
+			}
+			catch (error) {
+				console.error(error);
+				socket.emit('exerror', error.message);
+			}
+		});
 	},
 	"4": (socket, { pid, studentNumber }) => {
 		const executable = `${pid}.exe`;

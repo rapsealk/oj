@@ -41,23 +41,34 @@
 		            <span class="icon-bar"></span>
 		            <span class="icon-bar"></span>
         		</button>
-        		<a class="navbar-brand" href="/">2018 프로그래밍입문 실습평가</a>
+                <a class="navbar-brand" href="/">2018 프로그래밍입문 실습평가</a>
         	</div>
 
         	<div class="collapse navbar-collapse" id="navigation-example">
         		<ul class="nav navbar-nav navbar-right">
-                    <!-- TODO: Quiz
-                    < weeks.forEach(week => { >
                     <li>
-                        <a data-placement="bottom" href="/?week=<= week >" class="btn btn-white btn-simple btn-just-icon">
-                            week <= week >
+                        <a data-placement="bottom" href="/problem/1" class="btn btn-white btn-simple btn-just-icon btn-problem">
+                            Problem 1
                         </a>
                     </li>
-                    < }); >
-                    -->
                     <li>
-                        <a data-placement="bottom" href="/quiz/1" class="btn btn-white btn-simple btn-just-icon">
-                            Quiz 1
+                        <a data-placement="bottom" href="/problem/2" class="btn btn-white btn-simple btn-just-icon btn-problem">
+                            Problem 2
+                        </a>
+                    </li>
+                    <li>
+                        <a data-placement="bottom" href="/problem/3" class="btn btn-white btn-simple btn-just-icon btn-problem">
+                            Problem 3
+                        </a>
+                    </li>
+                    <li>
+                        <a data-placement="bottom" href="/problem/4" class="btn btn-white btn-simple btn-just-icon btn-problem">
+                            Problem 4
+                        </a>
+                    </li>
+                    <li>
+                        <a data-placement="bottom" href="/problem/5" class="btn btn-white btn-simple btn-just-icon btn-problem">
+                            Problem 5
                         </a>
                     </li>
                     
@@ -84,7 +95,7 @@
 						<div class="card card-signup">
 							<form class="form" action="#!">
 								<div class="header header-info text-center">
-									<h4>gcc <%= gcc %></h4>
+									<h4>Problem <%= pid %></h4>
 								</div>
 								<div class="content">
 									<div class="input-group col-md-8">
@@ -256,16 +267,19 @@
             socket.on('cperror', data => {
                 alertNodeGenerator('danger', data);
                 submitButton.disabled = false;
+                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = 'DarkOrange';
             });
 
             socket.on('exerror', data => {
                 alertNodeGenerator('warning', data);
                 submitButton.disabled = false;
+                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = 'DarkOrange';
             });
 
 			socket.on('correct', data => {
 				alertNodeGenerator('info', data);
-				submitButton.disabled = false;
+                submitButton.disabled = false;
+                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = 'DeepSkyBlue';
 			});
 
             submitButton.addEventListener('click', function(e) {
@@ -275,12 +289,12 @@
                 socket.emit('data', {
                     // TODO
                     // week: "<= week >",
-                    pid: 1,
+                    pid: <%= pid %>,
                     studentNumber: <%= studentNumber %>,
                     code: editor.getValue()
                 });
 				// unlock
-                submitButton.disabled = false;
+                // submitButton.disabled = false;
             });
         });
     </script>

@@ -1,17 +1,23 @@
 const express = require('express');
 const router = express.Router();
 
-const gcc = require('../utils/gcc');
-
 const jwt = require('jsonwebtoken');
+
+const fs = require('fs');
+const path = require('path');
+const __submission = path.join(__dirname, 'submits');
 
 router.get('/', async function(req, res) {
 
-	res.redirect('/q/1');
+	res.redirect('/problem/1');
 });
 
-router.get('/q/:qid', async (req, res) => {
+router.get('/problem/:pid', async (req, res) => {
 
+	const { pid } = req.params;
+	if (!pid) return res.redirect('/problem/1');
+
+	/*
 	if (Date.now() < new Date('2018-12-14 18:00')) {
 		return res.render('error');
 	}
@@ -19,9 +25,7 @@ router.get('/q/:qid', async (req, res) => {
 	if (Date.now() >= new Date('2018-12-14 20:00')) {
 		return res.render('error');
 	}
-
-	const { qid } = req.params;
-	if (!qid) return res.redirect('/q/1');
+	*/
 
 	const { token } = req.cookies;
 	if (token === undefined) {
@@ -35,7 +39,7 @@ router.get('/q/:qid', async (req, res) => {
 		return res.redirect('/login');
 	}
 
-	res.render('index', { gcc, qid, studentNumber: decoded.studentNumber })
+	res.render('index', { pid, studentNumber: decoded.studentNumber });
 });
 
 module.exports = router;

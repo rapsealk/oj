@@ -3,9 +3,7 @@ const router = express.Router();
 
 const jwt = require('jsonwebtoken');
 
-const fs = require('fs');
-const path = require('path');
-const __submission = path.join(__dirname, 'submits');
+//const database = require('../utils/database');
 
 router.get('/', async function(req, res) {
 
@@ -36,7 +34,26 @@ router.get('/problem/:pid', async (req, res) => {
 		const decoded = jwt.verify(token, req.app.get('jwt-secret'));
 		console.log('decoded:', decoded);
 		if (!decoded) return res.redirect('/login');
-		res.render('index', { pid, studentNumber: decoded.studentNumber });
+
+		const { studentNumber } = decoded;
+		const history = { "1": false, "2": false, "3": false, "4": false, "5": false };
+
+		/*
+		try {
+			var conn = await database.getConnection();
+			const query = 'SELECT * FROM record WHERE studentNumber = ?';
+			const records = await conn.query(query, [studentNumber]);
+			records.forEach(record => history[record.pid] = !!record.result);
+		}
+		catch (error) {
+			console.error(error);
+		}
+		finally {
+			await database.releaseConnection(conn);
+		}
+		*/
+
+		res.render('index', { pid, studentNumber, history });
 	}
 	catch (error) {
 		console.log(error.name);

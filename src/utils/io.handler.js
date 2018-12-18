@@ -2,9 +2,31 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// const database = require('./database');
+
 const data = require('./data.json');
 const __submission = path.join(__dirname, "../submits");
-
+/*
+async function updateResultOnDatabase(studentNumber, pid, condition) {
+	try {
+		var conn = await database.getConnection();
+		const query = 'INSERT INTO record SET ?';
+		const recordSet = {
+			studentNumber, pid,
+			result: condition,
+			timestamp: new Date()
+		};
+		const queryId = await conn.query(query, recordSet);
+		console.log('queryId:', queryId);
+	}
+	catch (error) {
+		console.error(error);
+	}
+	finally {
+		await database.releaseConnection(conn);
+	}
+}
+*/
 const runway = {
 	"1": (socket, { pid, studentNumber }) => {
 
@@ -16,6 +38,7 @@ const runway = {
 			const executionArgs = [];
 			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
 			const executionProcess = spawn(executable, executionArgs, executionOptions);
+			let processIsRunning = true;
 			executionProcess.stdin.setDefaultEncoding('utf-8');
 			executionProcess.stdout.setDefaultEncoding('utf-8');
 			executionProcess.stderr.setDefaultEncoding('utf-8');
@@ -23,20 +46,32 @@ const runway = {
 			executionProcess.stdout.on('data', dum => stdout += dum.toString('utf-8'));
 			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
 			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
-			executionProcess.on('close', code => {
+			executionProcess.on('close', async code => {
+				if (!processIsRunning) return;
+				processIsRunning = false;
 				console.log('[Execution::CLOSE]:', code);
-				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+				//fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 
 				// CRLF
 				stdout = stdout.split('\r\n').map(od => od.replace(/\s+$/, ""));
 				stdout.pop();
 
 				const condition = (stdout.join(' ') === outputs.join(' '));
+
+				// await updateResultOnDatabase(studentNumber, pid, condition);
+
 				if (condition)
 					socket.emit('correct', '맞았습니다.');
 				else
 					socket.emit('exerror', '틀렸습니다.');
 			});
+
+			setTimeout(() => {
+				if (!processIsRunning) return;
+				processIsRunning = false;
+				executionProcess.kill('SIGKILL');
+				socket.emit('exerror', '시간 초과되었습니다.');
+			}, 3000);
 		}
 		catch (error) {
 			// throw error;
@@ -74,16 +109,20 @@ const runway = {
 				});
 				executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
 				executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
-				executionProcess.on('close', code => {
+				executionProcess.on('close', async code => {
 					console.log('[Execution::CLOSE]:', code);
 					
 					closeCount += 1;
 					if (closeCount == caseCount) {
-						if (result.filter(r => r == true).length == result.length)
+
+						const condition = (result.filter(r => r == true).length == result.length);
+						// await updateResultOnDatabase(studentNumber, pid, condition);
+
+						if (condition)
 							socket.emit('correct', '맞았습니다.');
 						else
 							socket.emit('exerror', '틀렸습니다.');
-						fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+						//fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 					}
 				});
 
@@ -125,17 +164,21 @@ const runway = {
 				});
 				executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
 				executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
-				executionProcess.on('close', code => {
+				executionProcess.on('close', async code => {
 					console.log('[Execution::CLOSE]:', code);
 
 					closeCount += 1;
 					if (closeCount == cases.length) {
+
+						const condition = (result.length == result.filter(r => r).length);
+
+						//await updateResultOnDatabase(studentNumber, pid, condition);
 						// fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 
-						if (result.length == result.filter(r => r).length)
+						if (condition)
 							socket.emit('correct', '맞았습니다.');
 						else
-							socket.emit('exerror', '틀렸습니다')
+							socket.emit('exerror', '틀렸습니다');
 					}
 				});
 
@@ -149,40 +192,74 @@ const runway = {
 		});
 	},
 	"4": (socket, { pid, studentNumber }) => {
-		const executable = `${pid}.exe`;
+		
+		const dataset = data[`${pid}`];
+		const result = dataset.map(d => false);
+		let closeCount = 0;
+
+		dataset.forEach((dset, index) => {
+			const executable = `${pid}.exe`;
 			const executionArgs = [];
 			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
 			const executionProcess = spawn(executable, executionArgs, executionOptions);
 			executionProcess.stdin.setDefaultEncoding('utf-8');
 			executionProcess.stdout.setDefaultEncoding('utf-8');
 			executionProcess.stderr.setDefaultEncoding('utf-8');
-			executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
+			executionProcess.stdout.on('data', data => {
+				data = data.toString('utf-8').split('\r\n');
+				data.pop();
+				console.log('[Execution::STDOUT]:', data);
+				result[index] = (dset.output.join('') == data.join(''));
+			});
 			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
 			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
-			executionProcess.on('close', code => {
+			executionProcess.on('close', async code => {
 				console.log('[Execution::CLOSE]:', code);
-				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 
-				socket.emit('correct', 'Hello world!');
+				closeCount += 1;
+
+				if (closeCount == result.length) {
+					//fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+					const condition = (result.length == result.filter(r => r).length);
+					//await updateResultOnDatabase(studentNumber, pid, condition);
+
+					if (condition)
+							socket.emit('correct', '맞았습니다.');
+						else
+							socket.emit('exerror', '틀렸습니다');
+				}
 			});
+
+			dset.input.forEach(di => executionProcess.stdin.write(di + '\n'));
+			executionProcess.stdin.end();
+		});
 	},
 	"5": (socket, { pid, studentNumber }) => {
 		const executable = `${pid}.exe`;
-			const executionArgs = [];
-			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
-			const executionProcess = spawn(executable, executionArgs, executionOptions);
-			executionProcess.stdin.setDefaultEncoding('utf-8');
-			executionProcess.stdout.setDefaultEncoding('utf-8');
-			executionProcess.stderr.setDefaultEncoding('utf-8');
-			executionProcess.stdout.on('data', data => console.log('[Execution::STDOUT]:', data.toString('utf-8')));
-			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
-			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
-			executionProcess.on('close', code => {
-				console.log('[Execution::CLOSE]:', code);
-				fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+		const executionArgs = [];
+		const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+		const executionProcess = spawn(executable, executionArgs, executionOptions);
+		executionProcess.stdin.setDefaultEncoding('utf-8');
+		executionProcess.stdout.setDefaultEncoding('utf-8');
+		executionProcess.stderr.setDefaultEncoding('utf-8');
+		let stdoutCount = 0;
+		executionProcess.stdout.on('data', data => {
+			console.log('[Execution::STDOUT]:', data.toString('utf-8'));
+			stdoutCount += 1;
+			if (stdoutCount == 10) executionProcess.kill('SIGHUP');
+		});
+		executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+		executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+		executionProcess.on('close', async code => {
+			console.log('[Execution::CLOSE]:', code);
+			fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
 
-				socket.emit('correct', 'Hello world!');
-			});
+			socket.emit('correct', 'Hello world!');
+		});
+
+		data[`${pid}`].input.forEach(number => executionProcess.stdin.write(number + '\n'));
+		executionProcess.stdin.end();
 	}
 };
 
@@ -205,6 +282,11 @@ module.exports = io => {
 			fs.writeFileSync(codename, code, 'utf-8');
 			console.log('codename:', codename);
 
+			if (pid == '4' || pid == '5') {
+				socket.emit('correct', '제출이 완료되었습니다.');
+				return;
+			}
+
 			try {
 				// Compile
 				const compileArgs = [`${pid}.c`];
@@ -221,7 +303,7 @@ module.exports = io => {
 				});
 				compileProcess.on('close', code => {
 					console.log('[Compile::CLOSE]:', code);
-					fs.unlink(`${__submission}/${studentNumber}/${pid}.obj`, console.error);
+					//fs.unlink(`${__submission}/${studentNumber}/${pid}.obj`, console.error);
 
 					if (cflag) runway[`${pid}`](socket, { pid, studentNumber });
 				});

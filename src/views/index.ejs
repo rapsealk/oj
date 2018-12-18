@@ -46,6 +46,14 @@
 
         	<div class="collapse navbar-collapse" id="navigation-example">
         		<ul class="nav navbar-nav navbar-right">
+                    <% Object.keys(history).slice(0, 5).forEach(pid => { %>
+                    <li>
+                        <a data-placement="bottom" href="/problem/<%= pid %>" class="btn btn-white btn-simple btn-just-icon btn-problem"<% if (history[pid]) { %> style="background-color: DeepSkyBlue;"<% } %>>
+                            Problem <%= pid %>
+                        </a>
+                    </li>
+                    <% }); %>
+                    <!--
                     <li>
                         <a data-placement="bottom" href="/problem/1" class="btn btn-white btn-simple btn-just-icon btn-problem">
                             Problem 1
@@ -71,7 +79,7 @@
                             Problem 5
                         </a>
                     </li>
-                    
+                    -->                    
                     <li>
                         <a data-placement="bottom" href="/" class="btn btn-white btn-simple btn-just-icon" style="background-color: black;">
                             <%= studentNumber %>
@@ -267,13 +275,13 @@
             socket.on('cperror', data => {
                 alertNodeGenerator('danger', data);
                 submitButton.disabled = false;
-                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = 'DarkOrange';
+                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = '';
             });
 
             socket.on('exerror', data => {
                 alertNodeGenerator('warning', data);
                 submitButton.disabled = false;
-                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = 'DarkOrange';
+                document.getElementsByClassName('btn-problem')[<%= pid %> - 1].style.backgroundColor = '';
             });
 
 			socket.on('correct', data => {

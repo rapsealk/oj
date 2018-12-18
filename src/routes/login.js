@@ -23,7 +23,7 @@ router.post('/', (req, res) => {
 
     const { studentNumber, password } = req.body;   // ''
     
-    if (!studentNumber || !password || students[studentNumber] === undefined || students[studentNumber].password !== password) {
+    if (!studentNumber || !password || students[studentNumber] === undefined || students[studentNumber] !== password) {
         return res.render('login', { message: '학번 혹은 비밀번호가 틀렸습니다.' });
     }
 

@@ -2,53 +2,264 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-const gcc = require('./gcc');
+// const database = require('./database');
 
-const execution = {
-	"10": function(dirname, timestamp, socket) {
-		const inputs = fs.readFileSync(`${dirname}/20181109_in.txt`, { encoding: 'utf-8' }).split('\n');
-		inputs.pop();
-		const answers = fs.readFileSync(`${dirname}/20181109_out.txt`, { encoding: 'utf-8' }).split('\n');
-		inputs.forEach((input, index) => {
-			const execute = spawn(`${dirname}/${timestamp}`, input.split(' '));
-			execute.stdout.on('data', data => {
-				data = data.toString('utf-8').replace('\n', '');
-				const equals = (data == answers[index]);
-				console.log('[execute:stdout]:', data, '[expected]:', answers[index], '[equals]:', equals);
-				if (!equals) {
-					socket.emit('exerror', `Input: ${input}, Expected: ${answers[index]}, Output: ${data}`);
-					execute.kill('SIGKILL');
-				} else {
-					socket.emit('correct', `Input: ${input}, Expected: ${answers[index]}, Output: ${data}`);
-				}
+const data = require('./data.json');
+const __submission = path.join(__dirname, "../submits");
+/*
+async function updateResultOnDatabase(studentNumber, pid, condition) {
+	try {
+		var conn = await database.getConnection();
+		const query = 'INSERT INTO record SET ?';
+		const recordSet = {
+			studentNumber, pid,
+			result: condition,
+			timestamp: new Date()
+		};
+		const queryId = await conn.query(query, recordSet);
+		console.log('queryId:', queryId);
+	}
+	catch (error) {
+		console.error(error);
+	}
+	finally {
+		await database.releaseConnection(conn);
+	}
+}
+*/
+const runway = {
+	"1": (socket, { pid, studentNumber }) => {
+
+		let stdout = '';
+		
+		try {
+			// Run
+			const executable = `${pid}.exe`;
+			const executionArgs = [];
+			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+			const executionProcess = spawn(executable, executionArgs, executionOptions);
+			let processIsRunning = true;
+			executionProcess.stdin.setDefaultEncoding('utf-8');
+			executionProcess.stdout.setDefaultEncoding('utf-8');
+			executionProcess.stderr.setDefaultEncoding('utf-8');
+			const outputs = data[`${pid}`].output.slice(0);
+			executionProcess.stdout.on('data', dum => stdout += dum.toString('utf-8'));
+			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+			executionProcess.on('close', async code => {
+				if (!processIsRunning) return;
+				processIsRunning = false;
+				console.log('[Execution::CLOSE]:', code);
+				//fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+				// CRLF
+				stdout = stdout.split('\r\n').map(od => od.replace(/\s+$/, ""));
+				stdout.pop();
+
+				const condition = (stdout.join(' ') === outputs.join(' '));
+
+				// await updateResultOnDatabase(studentNumber, pid, condition);
+
+				if (condition)
+					socket.emit('correct', '맞았습니다.');
+				else
+					socket.emit('exerror', '틀렸습니다.');
 			});
-			execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
-			execute.on('error', message => console.log('[execute:error]:', message));
-			execute.on('close', code => console.log('[execute:close]:', code));
+
+			setTimeout(() => {
+				if (!processIsRunning) return;
+				processIsRunning = false;
+				executionProcess.kill('SIGKILL');
+				socket.emit('exerror', '시간 초과되었습니다.');
+			}, 3000);
+		}
+		catch (error) {
+			// throw error;
+			socket.emit('exerror', error.code);
+		}
+	},
+	"2": (socket, { pid, studentNumber }) => {
+
+		const raw_inputs = data[`${pid}`].input.slice(0);
+		const outputs = data[`${pid}`].output.slice(0);
+
+		const inputs = [];
+		for (let i = 0; i < raw_inputs.length; i += 2) {
+			inputs.push([raw_inputs[i], raw_inputs[i+1]]);
+		}
+
+		const result = outputs.map(o => false);
+		const caseCount = inputs.length;
+		let closeCount = 0;
+
+		inputs.forEach((input, idx) => {
+			try {
+				const executable = `${pid}.exe`;
+				const executionArgs = [];
+				const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+				const executionProcess = spawn(executable, executionArgs, executionOptions);
+				executionProcess.stdin.setDefaultEncoding('utf-8');
+				executionProcess.stdout.setDefaultEncoding('utf-8');
+				executionProcess.stderr.setDefaultEncoding('utf-8');
+				executionProcess.stdout.on('data', data => {
+					data = data.toString('utf-8').replace('\r\n', '');
+					console.log('[Execution::STDOUT]:', data);
+
+					result[idx] = (data == outputs[idx]);
+				});
+				executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+				executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+				executionProcess.on('close', async code => {
+					console.log('[Execution::CLOSE]:', code);
+					
+					closeCount += 1;
+					if (closeCount == caseCount) {
+
+						const condition = (result.filter(r => r == true).length == result.length);
+						// await updateResultOnDatabase(studentNumber, pid, condition);
+
+						if (condition)
+							socket.emit('correct', '맞았습니다.');
+						else
+							socket.emit('exerror', '틀렸습니다.');
+						//fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+					}
+				});
+
+				executionProcess.stdin.write(input[0] + '\n');
+				executionProcess.stdin.write(input[1] + '\n');
+				executionProcess.stdin.end();
+			}
+			catch (error) {
+				socket.emit('exerror', error.code);
+			}
 		});
 	},
-	"11": function(dirname, timestamp, socket) {
-		
-		const inputs = fs.readFileSync(`${dirname}/20181116_in.txt`, { encoding: 'utf-8' }).split('\n');
-		inputs.pop();
-		const answers = fs.readFileSync(`${dirname}/20181116_out.txt`, { encoding: 'utf-8' }).split('\n');
+	// FIXME: Windows Defender 실시간 검사에서 문제 발생
+	"3": (socket, { pid, studentNumber }) => {
 
-		inputs.forEach((input, index) => {
-			const execute = spawn(`${dirname}/${timestamp}`);
-			execute.stdout.on('data', data => {
-				data = data.toString('utf-8').replace('\n', '');
-				console.log('[execute:stdout]:', data);
-				const topic = (data == answers[index]) ? 'correct' : 'exerror';
-				socket.emit(topic, `Expected: ${answers[index]}, Output: ${data}`);
-			});
-			execute.stderr.on('data', data => console.log('[execute:stderr]:', data.toString('utf-8')));
-			execute.on('error', message => console.log('[execute:error]:', message));
-			execute.on('close', code => console.log('[execute:close]:', code));
-	
-			execute.stdin.setEncoding('utf-8');
-			execute.stdin.write(input+'\n');
-			execute.stdin.end();
+		const cases = data[`${pid}`];
+		const result = cases.map(c => false);
+		let closeCount = 0;
+
+		cases.forEach((_case, index) => {
+			try {
+				const executable = `${pid}.exe`;
+				const executionArgs = [];
+				const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+				const executionProcess = spawn(executable, executionArgs, executionOptions);
+				executionProcess.stdin.setDefaultEncoding('utf-8');
+				executionProcess.stdout.setDefaultEncoding('utf-8');
+				executionProcess.stderr.setDefaultEncoding('utf-8');
+				executionProcess.stdout.on('data', data => {
+					data = data.toString('utf-8').split('\r\n').map(it => it.replace(/\s+$/, ''));
+					data.pop();
+					let succeed = true;
+					for (let i = 0; i < data.length; i++) {
+						console.log([data[i], _case.output[i]]);
+						console.log('matches:', data[i] == _case.output[i]);
+						succeed &= (data[i] == _case.output[i]);
+					}
+					result[index] = succeed;
+				});
+				executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+				executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+				executionProcess.on('close', async code => {
+					console.log('[Execution::CLOSE]:', code);
+
+					closeCount += 1;
+					if (closeCount == cases.length) {
+
+						const condition = (result.length == result.filter(r => r).length);
+
+						//await updateResultOnDatabase(studentNumber, pid, condition);
+						// fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+						if (condition)
+							socket.emit('correct', '맞았습니다.');
+						else
+							socket.emit('exerror', '틀렸습니다');
+					}
+				});
+
+				executionProcess.stdin.write(_case.input + '\n');
+				executionProcess.stdin.end();
+			}
+			catch (error) {
+				console.error(error);
+				socket.emit('exerror', error.message);
+			}
 		});
+	},
+	"4": (socket, { pid, studentNumber }) => {
+		
+		const dataset = data[`${pid}`];
+		const result = dataset.map(d => false);
+		let closeCount = 0;
+
+		dataset.forEach((dset, index) => {
+			const executable = `${pid}.exe`;
+			const executionArgs = [];
+			const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+			const executionProcess = spawn(executable, executionArgs, executionOptions);
+			executionProcess.stdin.setDefaultEncoding('utf-8');
+			executionProcess.stdout.setDefaultEncoding('utf-8');
+			executionProcess.stderr.setDefaultEncoding('utf-8');
+			executionProcess.stdout.on('data', data => {
+				data = data.toString('utf-8').split('\r\n');
+				data.pop();
+				console.log('[Execution::STDOUT]:', data);
+				result[index] = (dset.output.join('') == data.join(''));
+			});
+			executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+			executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+			executionProcess.on('close', async code => {
+				console.log('[Execution::CLOSE]:', code);
+
+				closeCount += 1;
+
+				if (closeCount == result.length) {
+					//fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+					const condition = (result.length == result.filter(r => r).length);
+					//await updateResultOnDatabase(studentNumber, pid, condition);
+
+					if (condition)
+							socket.emit('correct', '맞았습니다.');
+						else
+							socket.emit('exerror', '틀렸습니다');
+				}
+			});
+
+			dset.input.forEach(di => executionProcess.stdin.write(di + '\n'));
+			executionProcess.stdin.end();
+		});
+	},
+	"5": (socket, { pid, studentNumber }) => {
+		const executable = `${pid}.exe`;
+		const executionArgs = [];
+		const executionOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+		const executionProcess = spawn(executable, executionArgs, executionOptions);
+		executionProcess.stdin.setDefaultEncoding('utf-8');
+		executionProcess.stdout.setDefaultEncoding('utf-8');
+		executionProcess.stderr.setDefaultEncoding('utf-8');
+		let stdoutCount = 0;
+		executionProcess.stdout.on('data', data => {
+			console.log('[Execution::STDOUT]:', data.toString('utf-8'));
+			stdoutCount += 1;
+			if (stdoutCount == 10) executionProcess.kill('SIGHUP');
+		});
+		executionProcess.stderr.on('data', data => console.log('[Execution::STDERR]:', data.toString('utf-8')));
+		executionProcess.on('error', message => console.log('[Execution::ERROR]:', message));
+		executionProcess.on('close', async code => {
+			console.log('[Execution::CLOSE]:', code);
+			fs.unlink(`${__submission}/${studentNumber}/${pid}.exe`, console.error);
+
+			socket.emit('correct', 'Hello world!');
+		});
+
+		data[`${pid}`].input.forEach(number => executionProcess.stdin.write(number + '\n'));
+		executionProcess.stdin.end();
 	}
 };
 
@@ -59,47 +270,46 @@ module.exports = io => {
 
 		socket.on('data', data => {
 
-			const { week, code } = data;
+			const { pid, studentNumber, code } = data;
+			let cflag = true;
 
-			// check if dir "submits" exists.
-			const dirname = path.join(__dirname, '../submits');
-			try {
-				fs.statSync(dirname);
-			} catch (e) {
-				if (e.code === 'ENOENT') fs.mkdirSync(dirname);
+			console.log('pid:', pid);
+			console.log('studentNumber:', studentNumber);
+			console.log('=========== code ===========');
+			console.log(code + '\n');
+
+			const codename = `${__submission}\\${studentNumber}\\${pid}.c`;
+			fs.writeFileSync(codename, code, 'utf-8');
+			console.log('codename:', codename);
+
+			if (pid == '4' || pid == '5') {
+				socket.emit('correct', '제출이 완료되었습니다.');
+				return;
 			}
 
-			// Promise
-			const timestamp = Date.now();
-			const filename = `${timestamp}.c`;
-
-			fs.writeFileSync(`${dirname}/${filename}`, code, 'utf-8');
-
-			let isCompileSuccessful = true;
-
-			// compile
 			try {
-				const gccOptions = [`${dirname}/${filename}`, '-o', `${dirname}/${timestamp}`].concat(gcc.split(' '));
-				const compile = spawn('gcc', gccOptions);	// -O2, -Wall
-				compile.stdout.on('data', data => console.log('[compile:stdout]:', data.toString('utf-8')));
-				compile.stderr.on('data', data => {
-					isCompileSuccessful = false;
-					data = data.toString('utf-8').split(':').slice(1).join(':');
-					console.log('[compile:stderr]:', data);
-					socket.emit('cperror', data);
-					compile.kill('SIGKILL');
+				// Compile
+				const compileArgs = [`${pid}.c`];
+				const compileOptions = { cwd: path.join(__submission, `${studentNumber}`) };
+				const compileProcess = spawn('cl', compileArgs, compileOptions);
+				compileProcess.stdout.on('data', data => console.log('[Compile::STDOUT]:', data.toString('utf-8')));
+				compileProcess.stderr.on('data', data => {
+					console.log('[Compile::STDERR]:', data.toString('utf-8'));
+					// cflag = false;
 				});
-				compile.on('error', message => console.log('[compile:error]:', message));
-				compile.on('close', code => {
-					console.log('[compile:close]:', code);
-	
-					if (!isCompileSuccessful) return;
+				compileProcess.on('error', message => {
+					console.log('[Compile::ERROR]:', message);
+					cflag = false;
+				});
+				compileProcess.on('close', code => {
+					console.log('[Compile::CLOSE]:', code);
+					//fs.unlink(`${__submission}/${studentNumber}/${pid}.obj`, console.error);
 
-					// execute
-					execution[week](dirname, timestamp, socket);
+					if (cflag) runway[`${pid}`](socket, { pid, studentNumber });
 				});
-			} catch (e) {
-				console.log('[compile_error]:', e);
+			}
+			catch (error) {
+				console.log('[Compile::Error]:', error);
 			}
 		});
 

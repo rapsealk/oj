@@ -1,1 +1,0 @@
-module.exports = '-std=c99 -static'

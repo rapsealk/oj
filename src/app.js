@@ -24,7 +24,11 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/monaco', express.static(path.join(__dirname, 'node_modules/monaco-editor')));
 
+// set the secret key variable for jwt
+app.set('jwt-secret', 'random-hash-generator');
+
 app.use('/', index);
+app.use('/login', require('./routes/login'));
 app.use('/samples', require('./routes/samples'));
 
 // catch 404 and forward to error handler

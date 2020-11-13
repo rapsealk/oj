@@ -87,6 +87,9 @@
     .header-danger{
         background: linear-gradient(60deg, $red-400, $red-700);
     }
+    .header-cyan {
+        background: linear-gradient(60deg, $cyan-400, $cyan-700);
+    }
 
     [class*="header-"]{
         color: #FFFFFF;
